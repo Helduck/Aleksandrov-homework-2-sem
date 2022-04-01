@@ -1,0 +1,139 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#define N 4
+
+int reg_det (char * reg_str); //Эта функция нужна для определения номера регистра
+int num_reader (char * data_str); //Эта функция нужна для определения числа, в случае если третий аргумент является числом
+int data_det (char * data_str, int * a); //Эта функция нужна для определения численного значения второго аргумента команды
+void add (int * a, int reg_num, int data); //Это команда add
+void sub (int * a, int reg_num, int data); //Это команда sub
+void mov (int * a, int reg_num, int data); //Это команда mov
+void read_all (char * comm_str, char * reg_str, char * data_str); //Это считывание всей исходной строки
+void print_regs (int * a);
+
+void read_all (char * comm_str, char * reg_str, char * data_str) {
+    char ch;
+    scanf ("%3s%3s", comm_str, reg_str);
+    scanf ("%c", &ch);
+    scanf ("%c", &ch);
+    scanf ("%7s", data_str);
+
+    //printf ("%3s %3s %7s\n", comm_str, reg_str, data_str);
+    return;
+}
+
+int reg_det (char * reg_str) {
+    switch (reg_str[1]) {
+        case 'a':
+            return 0;
+        case 'b':
+            return 1;
+        case 'c':
+            return 2;
+        case 'd':
+            return 3;
+    }
+    return 0;
+}
+
+int num_reader (char * data_str) {
+    int data = 0;
+    if (data_str[0] == '-') {
+        int i = 1;
+        while (data_str[i] != '\0') {
+            data = data * 10 + (data_str[i] - 48);
+            i++;
+        }
+        data = -data;
+    }
+    else {
+        int j = 0;
+        while (data_str[j] != '\0') {
+            data = data * 10 + (data_str[j] - 48);
+            j++;
+        }
+    }
+    return data;
+}
+
+int data_det (char * data_str, int * a) {
+    if (data_str[0] == 'e') {
+        int d = reg_det (data_str);
+        //printf ("data1 is %d\n", a[d]);
+        return a[d];
+    }
+    else {
+        int b = num_reader (data_str);
+        //printf ("data1 is %d \n", b);
+        return b;
+    }
+    return 0;
+}
+
+void add (int * a, int reg_num, int data) {
+    a[reg_num] += data;
+    return;
+}
+
+void sub (int * a, int reg_num, int data) {
+    a[reg_num] -= data;
+    return;
+}
+
+void mov (int * a, int reg_num, int data) {
+    a[reg_num] = data;
+    return;
+}
+
+void print_regs (int * a) {
+    printf ("Регистры:");
+    for (int i = 0; i < 4; i++) {
+        printf ("%d ", a[i]);
+    }
+    printf ("\n");
+}
+
+int main () {
+    int a[N] = {0, 0, 0, 0};
+    char s_mov[4] = {'m', 'o', 'v', '\0'};
+    char s_add[4] = {'a', 'd', 'd', '\0'};
+    char s_sub[4] = {'s', 'u', 'b', '\0'};
+    char s_ret[4] = {'r', 'e', 't', '\0'};
+    char reg_str[4] = {'0', '0', '0', '\0'};
+    char comm_str[4] = {'0', '0', '0', '\0'};
+    char data_str[8] = {'0', '0', '0', '0', '0', '0', '\0'};
+    int reg_num = 0;
+    int data = 0;
+
+    while (1) {
+        printf ("Введите ассемблерную команду:\n");
+        read_all (comm_str, reg_str, data_str);
+
+        if (strcmp (comm_str, s_ret) == 0) {
+            return 0;
+        }
+
+        reg_num = reg_det (reg_str);
+        //printf ("reg number is %d\n", reg_num);
+        data = data_det (data_str, a);
+        //printf ("data2 is %d\n", data);
+
+        if (strcmp (comm_str, s_mov) == 0) {
+            //printf ("mov\n");
+            mov (a, reg_num, data);
+        }
+
+        if (strcmp (comm_str, s_add) == 0) {
+            //printf ("add\n");
+            add (a, reg_num, data);
+        }
+
+        if (strcmp (comm_str, s_sub) == 0) {
+            //printf ("sub\n");
+            sub (a, reg_num, data);
+        }
+        print_regs (a);
+    }
+    return 0;
+}
