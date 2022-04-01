@@ -1,0 +1,29 @@
+#include <stdio.h>
+#define N 10
+
+int main() {
+    int arr[N];
+    for(int i = 0; i < N; i++) {
+        arr[i] = i*i;
+    }
+    
+    int * p_arr = arr;
+    int m = 0;
+    printf ("Введите номер m:"); //Считаем, что нумерация элементов массива начинается с нуля
+    scanf ("%d", &m);
+    int res = 0;
+    
+    printf("Variables before asm: m = %d, arr = %p\n, elem = %d, res = %d\n", m, p_arr, arr[m], res);
+    
+	asm volatile(
+		".intel_syntax noprefix\n"
+        "xor rdx, rdx;\n"
+		"mov edx, [rax + rbx*4];\n"
+		".att_syntax noprefix"
+		: "=d" (res)
+		: "a" (p_arr), "b" (m)
+	);
+	
+    printf("Variables after asm: m = %d, arr = %p\n, elem = %d, res = %d", m, p_arr, arr[m], res);
+    return 0;
+}
