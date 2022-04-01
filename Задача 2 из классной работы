@@ -1,0 +1,57 @@
+#include <stdio.h>
+#include <string.h>
+#define N 12
+
+int main() {
+    char str[N] = {'S', 'a', 'P', 'e', 'R', 'e', ' ', 'A', 'u', 'D', 'e', '\0'};
+    int res = 0;
+
+    printf ("Our string is:\n");
+    
+    for (int i = 0; i < N; i++) {
+        printf ("%c", str[i]);
+    }
+    
+    char * p_str = str;
+    int N_count = strlen (str);
+    
+    printf("\nVariables before asm: p_arr = %p, len_of_str = %d\n", p_str, N_count);
+    
+    asm volatile(
+        ".intel_syntax noprefix\n"
+        "xor dx, dx;\n"
+        "L1:;\n"
+        "mov dl, 90;\n"
+		"cmp [rax + (rcx - 1)], dl;\n" 
+		"ja L2;\n"
+		"mov dl, 65;\n"
+		"cmp [rax + (rcx - 1)], dl;\n"
+		"jb L2;\n"
+		"mov dl, 32;\n"
+		"add [rax + (rcx - 1)], dl;\n"
+		"jmp L3;\n"
+		"L2:;\n"
+		"mov dl, 97;\n"
+		"cmp [rax + (rcx - 1)], dl;\n"
+		"jb L3;\n"
+		"mov dl, 122;\n"
+		"cmp [rax + (rcx - 1)], dl;\n"
+		"ja L3;\n"
+		"mov dl, 32;\n"
+		"sub [rax + (rcx - 1)], dl;\n"
+		"L3:;\n"
+		"loop L1;\n"
+        ".att_syntax noprefix"
+        : "=d" (res)
+        : "a" (p_str), "c" (N_count)
+	);
+	
+    printf ("Our new string is:\n");
+    
+    for (int i = 0; i < N; i++) {
+        printf ("%c", str[i]);
+    }
+    printf("\nVariables after asm: p_arr = %p, len_of_str = %d", p_str, N_count);
+    
+    return 0;
+}
