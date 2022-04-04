@@ -1,0 +1,33 @@
+global main
+extern printf
+extern scanf
+
+section .bss
+var1: resd 8
+var2: resd 8
+
+section .text
+main:
+    mov rdi, format
+    mov rsi, var1
+    mov rax, 0
+    call scanf
+
+    mov rdi, format
+    mov rsi, var2
+    mov rax, 0
+    call scanf
+
+    mov rax, [var1]
+    mov rbx, [var2]
+    idiv rbx
+
+    mov rdi, format
+    mov rsi, rax
+    mov rax, 0
+    call printf
+
+    xor rax, rax
+    ret
+
+format: db "%d", 10, 0
