@@ -1,0 +1,263 @@
+#include <stdio.h>
+#include <stdlib.h>
+#define n 10
+
+struct Elem {
+    int val;
+    struct Elem * lv;
+    struct Elem * pr;
+};
+
+struct addr {
+    struct Elem ** par_field;
+    struct Elem * del;
+    struct Elem * right;
+    struct Elem * par_right;
+};
+
+void tree_print (struct Elem *p) {
+    if (p != NULL) {
+        tree_print (p->lv);
+        printf ("%d ", p->val);
+        tree_print (p->pr);
+    }
+    return;
+}
+
+struct Elem * add_elem (struct Elem * p, int x) {
+    if (p == NULL) {
+        p = (struct Elem *) malloc (sizeof (struct Elem));
+        p->val = x;
+        p->lv = NULL;
+        p->pr = NULL;
+        return p; 
+    }
+    if (p->val > x) {
+        p->lv = add_elem (p->lv, x);
+        return p;
+    }
+    if (p->val < x) {
+        p->pr = add_elem (p->pr, x);
+        return p;
+    }
+    return p;
+}
+
+struct Elem * par_search (struct Elem *p, int x) { //Всё работает, поэтому лучше ничего не трогать
+    if (p->val == x) {
+        printf ("Удаляемый элемент - это корень, par_addr = %p\n", &p);
+        return p;
+    }
+    if (x > p->val) {
+        if (p->pr->val == x) {
+            printf ("par->val = %d, par_addr = %p\n", p->val, &p);
+            return p;
+        }
+        else {
+            return par_search (p->pr, x);
+        }
+    }
+    else {
+        if (p->lv->val == x) {
+            printf ("par->val = %d, par_addr = %p\n", p->val, &p);
+            return p;
+        }
+        else {
+            return par_search (p->lv, x);
+        }
+    }
+}
+
+void tree_destroy (struct Elem * p) {
+    if (p != NULL) {
+        if (p->pr != NULL) {
+            tree_destroy (p->pr);
+        }
+        if (p->lv != NULL) {
+            tree_destroy (p->lv);
+        }
+        free (p);
+    }
+    return;
+}
+
+void lvl_null (int lvl[][n]) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            lvl[i][j] = 0;
+        }
+    }
+    return;
+}
+
+void lvl_add (struct Elem *p, int lvl[][n], int k) {
+    if (p != NULL) {
+        lvl[k][p->val] = p->val;
+        lvl_add (p->lv, lvl, k + 1);
+        lvl_add (p->pr, lvl, k + 1);
+    }
+    return;
+}
+
+int lvl_max (int lvl[][n], int maxl) {
+    for (int i = 0; i < n; i++) {
+        int b = 0;
+        for (int j = 0; j < n; j++) {
+            b+=lvl[i][j];
+        }
+        if (b == 0) {
+            return maxl;
+        }
+        else {
+            maxl++;
+        }
+    }
+    return maxl;
+}
+
+void smart_print (int lvl[][n], struct Elem * root) {
+    lvl_null (lvl);
+    lvl_add (root, lvl, 0);
+    int maxl = 0;
+    maxl = lvl_max (lvl, maxl);
+    for (int i = 0; i < maxl; i++) {
+        for (int j = 0; j < n; j++) {
+            if (lvl[i][j] == 0) {
+                printf (" ");
+            }
+            else {
+                printf ("%d", lvl[i][j]);
+            }
+        }
+        printf ("\n");
+    }
+}
+
+struct Elem * search_right (struct Elem *p) { //Вроде всё правильно
+    if (p->pr != NULL) {
+        p = search_right (p->pr);
+    }
+    return p;
+}
+
+void del_elem (struct Elem *root, int x) {
+    if (root == NULL) { //Если дерево пусто, то выводим тот факт, что оно пусто
+        printf ("The tree is empty");
+        return;
+    }
+    if ((root->pr == NULL) && (root->lv == NULL)) { //Если дерево состоит только из корня, то делаем проверку
+        if (root->val == x) {
+            free (root);
+        }
+        else {
+            printf ("Данного элемента нет в дереве");
+        }
+        return;
+    }
+    struct addr * a = (struct addr *) malloc (sizeof (struct addr));
+    struct Elem *q = par_search (root, x); //Ищем родительский элемент - это нужно сделать в начале
+    if (q->val < x) {
+        a->del = q->pr;
+        a->par_field = &q->pr;
+    }
+    if (q->val == x) {
+        a->del = q;
+        a->par_field = &q;
+    }
+    if (q->val > x) {
+        a->del = q->lv;
+        a->par_field = &q->lv;
+    }
+    printf ("x_searched = %d, child_addr = %p\n", a->del->val, &a->del);
+
+    if (a->del->lv == NULL) { //Смотрим случай, когда у нашего элемента нет левых потомков
+        *a->par_field = a->del->pr;
+        free (a->del);
+        return;
+    }
+
+    if (a->del->lv != NULL) { //Смотрим случай, когда у элемента есть левые потомки
+        a->right = search_right (a->del->lv); //Ищем самый правый элемент его левого поддерева
+        printf ("right_searched = %d, right_addr = %p\n", a->right->val, &a->right);
+        a->par_right = par_search (a->del, a->del->val); //Ищем его родителя
+        if (a->del = a->par_right) {
+            *a->par_field = a->right;
+            free (a->del);
+            return;
+        }
+    }
+    else {
+        *a->par_field = a->right;
+        a->par_right->pr = a->right->lv;
+        a->right->pr = a->del->pr;
+        a->right->lv = a->del->lv;
+        free (a->del);
+        return;
+    }
+    return;
+}
+
+int main () {
+    struct Elem * root = NULL;
+    int lvl[n][n];
+    //lvl_null (lvl); //Это нужно занулить
+	root = add_elem (root, 7);
+	root = add_elem (root, 5);
+	root = add_elem (root, 8);
+	root = add_elem (root, 6);
+	root = add_elem (root, 3);
+	root = add_elem (root, 1);
+	root = add_elem (root, 4);
+	root = add_elem (root, 9);
+    printf ("Наше дерево выглядит так:\n");
+    tree_print (root);
+    printf ("\n");
+    printf ("Вывод дерева по уровням:\n");
+    smart_print (lvl, root);
+    int a = 0;
+    printf ("Введите значение элемента, который хотите удалить:\n");
+    scanf ("%d", &a);
+    del_elem (root, a);
+    printf ("А вот так выглядит дерево с удалённым элементом:\n");
+    smart_print (lvl, root);
+    tree_destroy (root);
+    return 0;
+}
+
+/*void smart_print (struct Elem * q, struct Elem * r) {
+    while (p != NULL) {
+        struct Elem * q = p->lv;
+        struct Elem * r = p->pr;
+        print_children (q);
+        print_children (r);
+        printf ("\n");
+    }
+}*/
+
+/*void print_children (struct Elem * p) {
+    if (p != NULL) {
+        if (p->lv != NULL) {
+            printf ("%d ", p->lv->val);
+        }
+        if (p->pr != NULL) {
+            printf ("%d ", p->pr->val);
+        }
+    }
+    return;
+}*/
+
+/*struct Elem * find_elem (struct Elem * p, int x) {
+    if (p == NULL) {
+        printf ("The tree is empty");
+        return NULL;
+    }
+    if (x != p->val) {
+        if (p->pr != NULL) {
+            p = find_elem (p->pr, x);
+        }
+        if (p->lv != NULL) {
+            p = find_elem (p->lv, x);
+        }
+    }
+    return p;
+}*/
