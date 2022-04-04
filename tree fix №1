@@ -179,18 +179,19 @@ void del_elem (struct Elem *root, int x) {
     if (a->del->lv != NULL) { //Смотрим случай, когда у элемента есть левые потомки
         a->right = search_right (a->del->lv); //Ищем самый правый элемент его левого поддерева
         printf ("right_searched = %d, right_addr = %p\n", a->right->val, &a->right);
-        a->par_right = par_search (a->del, a->del->val); //Ищем его родителя
+        a->par_right = par_search (a->del, a->right->val); //Ищем его родителя
         if (a->del = a->par_right) {
+            a->right->pr = a->del->pr;
             *a->par_field = a->right;
             free (a->del);
             return;
         }
     }
     else {
-        *a->par_field = a->right;
         a->par_right->pr = a->right->lv;
         a->right->pr = a->del->pr;
         a->right->lv = a->del->lv;
+        *a->par_field = a->right; 
         free (a->del);
         return;
     }
@@ -200,7 +201,6 @@ void del_elem (struct Elem *root, int x) {
 int main () {
     struct Elem * root = NULL;
     int lvl[n][n];
-    //lvl_null (lvl); //Это нужно занулить
 	root = add_elem (root, 7);
 	root = add_elem (root, 5);
 	root = add_elem (root, 8);
