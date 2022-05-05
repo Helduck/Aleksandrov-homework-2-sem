@@ -1,0 +1,59 @@
+#include <stdio.h>
+#include <sys/mman.h>
+#define jmp_size 2
+
+void func_1 () {
+    printf ("I am function 1\n");
+    return;
+}
+
+void func_2 () {
+    printf ("I am function 2\n");
+    return;
+}
+
+void call_1 () {
+    printf ("This is function number 1:\n");
+    func_1 ();
+    return;
+}
+
+void call_2 () {
+    printf ("This is function number 2:\n");
+    func_2 ();
+    return;
+}
+
+void mem_access_change () {
+    mprotect(&func_1 - (unsigned long long)&func_1%0x1000, 0x1000, PROT_READ | PROT_WRITE | PROT_EXEC);//изменяем права доступа к память с помощью mprotect
+    return;
+}
+
+void func_1_change () {
+    *((char *) & func_1) = 0xeb; //изменяем кусок кода в начале func_1 на прыжок по адресу
+    *((char *)(&func_1 + 1)) = &func_2 - &func_1 - jmp_size; //здесь пишем сам адрес прыжка  
+}
+
+int hack () {
+    mem_access_change ();
+    func_1_change ();
+    return 0;
+}
+
+void hack_pr () {
+    printf ("Now we are hacking function number 1:\n");
+    printf ("Press Enter to hack func_1 and call them both again");
+    char ch;
+    scanf ("%c", &ch);
+    hack ();
+    return;
+}
+
+int main() {
+    call_1 ();
+    call_2 ();
+    hack_pr ();
+    call_1 ();
+    call_2 ();
+    return 0;
+}
