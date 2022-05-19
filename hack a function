@@ -1,0 +1,65 @@
+#include <stdio.h>
+//#define N 10000
+
+int main (int argc, char **argv) {
+    char * filename_2 = "backup.exe"; //Суть программы в том, что мы создедим файл, в который будем копировать всё, 
+    FILE *file_1, *file_2;            //что было в Hello.exe (argv[1]), но заменим строчку Hello world! на Sapere aude!
+    if ((file_1 = fopen (argv[1], "r")) == NULL) { //Открываем оригинал на запись, а копию на чтение
+        printf ("Error while opening original file");
+        return 1;
+    }
+    if ((file_2 = fopen (filename_2, "w")) == NULL) {
+        printf ("Error while opening backup file");
+        return 1;
+    }
+    char hack_word[12] = "Sapere aude!";
+    char str;
+    str = getc (file_1);
+    while (str != EOF) {   
+        if (str == 'H') {
+            str = getc (file_1);
+            if (str == 'e') {
+                for (int i = 0; i < 12; i++) {
+                    fprintf (file_2, "%c", hack_word[i]);
+                }
+                for (int j = 0; j < 10; j++) {
+                    str = getc (file_1);
+                }
+            }
+            else {
+                char wrong = 'H';
+                fprintf (file_2, "%c", wrong);
+                fprintf (file_2, "%c", str);
+            }
+        }
+        else {
+            fprintf (file_2, "%c", str);    
+        }
+        str = getc (file_1);
+    }
+    
+    fclose (file_1); //Закрываем файлы, чтобы открыть их заново
+    fclose (file_2);
+    
+    if ((file_1 = fopen(argv[1], "w")) == NULL) { //Переоткрываем файлы, чтобы начать сначала, но копию на чтение, а оригинал на запись
+        printf ("Error while opening original file");
+        return 1;
+    }
+    if ((file_2 = fopen (filename_2, "r")) == NULL) {
+        printf ("Error while opening backup file");
+        return 1;
+    }
+    while (str != EOF) {
+        str = getc (file_2);
+        fprintf (file_1, "%c", str);
+    }
+    str = getc (file_2);
+    fprintf (file_1, "%c", str);
+    fclose (file_1);
+    fclose (file_2);
+    if (remove ("backup.exe")) {
+        printf ("Error while removing backup file");
+        return 1;
+    }
+    return 0;
+}
